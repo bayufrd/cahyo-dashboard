@@ -1,0 +1,17 @@
+{
+  "profile": {
+    "name": "Maker",
+    "role": "Account Manager"
+  },
+  "menu": [
+    { "title": "Dashboard", "icon": "🏠" },
+    { "title": "Audit Trail", "icon": "📜" },
+    { "title": "Task Manager", "icon": "✅" }
+  ],
+  "transactions": {
+    "total": 220209000,
+    "failed": 12000,
+    "successful": 220197000,
+    "weekly": [320000000, 250000000, 50000000, 1000000, 2000000, 3000000, 4000000]
+  }
+}
