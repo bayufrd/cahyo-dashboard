@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dataStore } from "$stores/dataStore";
+  import { dataStore } from "$lib/stores/dataStore";
 </script>
 
 <nav class="bg-white shadow p-4 flex justify-end">

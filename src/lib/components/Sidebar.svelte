@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dataStore } from "$stores/dataStore";
+  import { dataStore } from "$lib/stores/dataStore";
 </script>
 
 <aside class="w-64 bg-white shadow-md">

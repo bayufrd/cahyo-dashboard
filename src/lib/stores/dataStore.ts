@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { DashboardData } from '../types';
+import type { DashboardData } from '$lib/types';
 
 export const dataStore = writable<DashboardData | null>(null);
 

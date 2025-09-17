@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { dataStore, loadData } from "../stores/dataStore";
-  import Sidebar from "../components/Sidebar.svelte";
-  import Navbar from "../components/Navbar.svelte";
-  import StatCard from "../components/StatCard.svelte";
-  import TransactionChart from "../components/TransactionChart.svelte";
+  import { onMount } from 'svelte';
+  import { dataStore, loadData } from '$lib/stores/dataStore';
+  import Sidebar from '$lib/components/Sidebar.svelte';
+  import Navbar from '$lib/components/Navbar.svelte';
+  import StatCard from '$lib/components/StatCard.svelte';
+  import TransactionChart from '$lib/components/TransactionChart.svelte';
 
   onMount(loadData);
 </script>
