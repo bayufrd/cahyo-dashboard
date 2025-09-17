@@ -1,42 +1,35 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { dataStore, loadData } from '$lib/stores/dataStore';
-  import Sidebar from '$lib/components/Sidebar.svelte';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import { dataStore } from '$lib/stores/dataStore';
   import StatCard from '$lib/components/StatCard.svelte';
   import TransactionChart from '$lib/components/TransactionChart.svelte';
-
-  onMount(loadData);
 </script>
 
-<div class="flex h-screen bg-gray-50">
-  <Sidebar />
-  
-  <div class="flex-1 overflow-auto">
-    <Navbar />
+{#if $dataStore}
+  <div class="space-y-6">
+    <h1 class="text-2xl font-bold mb-4">Dashboard</h1>
     
-    <main class="p-6 space-y-6">
-      {#if $dataStore}
-        <div class="grid grid-cols-3 gap-6">
-          <StatCard 
-            title="Total Transactions" 
-            value={$dataStore.transactions.total} 
-            color="blue" 
-          />
-          <StatCard 
-            title="Failed Transactions" 
-            value={$dataStore.transactions.failed} 
-            color="red" 
-          />
-          <StatCard 
-            title="Successful Transactions" 
-            value={$dataStore.transactions.successful} 
-            color="green" 
-          />
-        </div>
+    <div class="grid grid-cols-3 gap-6">
+      <StatCard 
+        title="Total Transactions" 
+        value={$dataStore.transactions.total} 
+        color="blue" 
+      />
+      <StatCard 
+        title="Failed Transactions" 
+        value={$dataStore.transactions.failed} 
+        color="red" 
+      />
+      <StatCard 
+        title="Successful Transactions" 
+        value={$dataStore.transactions.successful} 
+        color="green" 
+      />
+    </div>
 
-        <TransactionChart data={$dataStore.transactions.weekly} />
-      {/if}
-    </main>
+    <TransactionChart data={$dataStore.transactions.weekly} />
   </div>
-</div>
+{:else}
+  <div class="bg-white shadow-md rounded-lg p-6 text-center text-gray-500">
+    Tidak ada data yang tersedia
+  </div>
+{/if}

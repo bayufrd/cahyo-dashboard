@@ -8,7 +8,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "strict": true
+    "strict": true,
+    "moduleResolution": "bundler",
+    "types": ["svelte", "vite"]
   },
   "include": [
     "src/**/*.d.ts",
@@ -17,7 +19,6 @@
     "src/**/*.svelte"
   ],
   "exclude": [
-    "node_modules/*",
-    "public/*"
+    "src/routes/list-scheduer"
   ]
 }

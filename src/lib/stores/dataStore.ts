@@ -10,5 +10,6 @@ export async function loadData() {
     dataStore.set(data);
   } catch (error) {
     console.error('Error loading data:', error);
+    dataStore.set(null);
   }
 }

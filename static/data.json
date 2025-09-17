@@ -5,7 +5,7 @@
   },
   "menu": [
     { "title": "Dashboard"},
-    { "title": "List Scheduer"},
+    { "title": "List Scheduler"},
     { "title": "Add Scheduler"}
   ],
   "transactions": {

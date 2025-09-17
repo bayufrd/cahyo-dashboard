@@ -1,12 +1,26 @@
 <script lang="ts">
-	import '../app.css';
-	// import favicon from '$lib/assets/favicon.svg';
-	
-	let { children } = $props();
+  import { page } from '$app/stores';
+  import { dataStore, loadData } from '$lib/stores/dataStore';
+  import Sidebar from '$lib/components/Sidebar.svelte';
+  import Navbar from '$lib/components/Navbar.svelte';
+  import { onMount } from 'svelte';
+  import '../app.css';
+
+  onMount(loadData);
+
+  function titleToRoute(title: string): string {
+    return `/${title.toLowerCase().replace(/\s+/g, '-')}`;
+  }
 </script>
 
-<svelte:head>
-	<!-- <link rel="icon" href={favicon} /> -->
-</svelte:head>
-
-{@render children?.()}
+<div class="flex h-screen bg-gray-50">
+  <Sidebar />
+  
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <Navbar />
+    
+    <main class="flex-1 overflow-auto p-6">
+      <slot />
+    </main>
+  </div>
+</div>
