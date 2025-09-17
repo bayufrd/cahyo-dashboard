@@ -4,9 +4,9 @@
     "role": "Account Manager"
   },
   "menu": [
-    { "title": "Dashboard", "icon": "🏠" },
-    { "title": "Audit Trail", "icon": "📜" },
-    { "title": "Task Manager", "icon": "✅" }
+    { "title": "Dashboard"},
+    { "title": "List Scheduer"},
+    { "title": "Add Scheduler"}
   ],
   "transactions": {
     "total": 220209000,

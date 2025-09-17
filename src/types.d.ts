@@ -5,7 +5,6 @@ export interface Profile {
 
 export interface MenuItem {
   title: string;
-  icon: string;
 }
 
 export interface Transactions {
