@@ -25,6 +25,7 @@ const Calendar: React.FC = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const calendarRef = useRef<FullCalendar>(null);
   const { isOpen, openModal, closeModal } = useModal();
+  const [repeatType, setRepeatType] = useState<"none" | "daily" | "weekly" | "monthly" | "3monthly" | "6monthly" | "yearly">("none");
 
   const calendarsEvents = {
     Danger: "danger",
@@ -39,23 +40,24 @@ const Calendar: React.FC = () => {
       {
         id: "1",
         title: "Event Conf.",
-        start: new Date().toISOString().split("T")[0],
+        start: new Date().toISOString(), // keep full datetime
         extendedProps: { calendar: "Danger" },
       },
       {
         id: "2",
         title: "Meeting",
-        start: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        start: new Date(Date.now() + 86400000).toISOString(), // +1 day
         extendedProps: { calendar: "Success" },
       },
       {
         id: "3",
         title: "Workshop",
-        start: new Date(Date.now() + 172800000).toISOString().split("T")[0],
-        end: new Date(Date.now() + 259200000).toISOString().split("T")[0],
+        start: new Date(Date.now() + 172800000).toISOString(), // +2 days
+        end: new Date(Date.now() + 259200000).toISOString(),   // +3 days
         extendedProps: { calendar: "Primary" },
       },
     ]);
+
   }, []);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
@@ -69,43 +71,89 @@ const Calendar: React.FC = () => {
     const event = clickInfo.event;
     setSelectedEvent(event as unknown as CalendarEvent);
     setEventTitle(event.title);
-    setEventStartDate(event.start?.toISOString().split("T")[0] || "");
-    setEventEndDate(event.end?.toISOString().split("T")[0] || "");
+    setEventStartDate(event.start?.toISOString() || "");
+    setEventEndDate(event.end?.toISOString() || "");
     setEventLevel(event.extendedProps.calendar);
     openModal();
   };
 
   const handleAddOrUpdateEvent = () => {
+    const start = new Date(eventStartDate);
+    const end = new Date(eventEndDate);
+
+    // fungsi helper untuk hitung interval repeat
+    const getNextDate = (date: Date, type: typeof repeatType) => {
+      const d = new Date(date);
+      switch (type) {
+        case "daily":
+          d.setDate(d.getDate() + 1);
+          break;
+        case "weekly":
+          d.setDate(d.getDate() + 7);
+          break;
+        case "monthly":
+          d.setMonth(d.getMonth() + 1);
+          break;
+        case "3monthly":
+          d.setMonth(d.getMonth() + 3);
+          break;
+        case "6monthly":
+          d.setMonth(d.getMonth() + 6);
+          break;
+        case "yearly":
+          d.setFullYear(d.getFullYear() + 1);
+          break;
+      }
+      return d;
+    };
+
+    let newEvents: CalendarEvent[] = [];
+
+    if (repeatType === "none") {
+      newEvents.push({
+        id: Date.now().toString(),
+        title: eventTitle,
+        start: start.toISOString(),
+        end: end.toISOString(),
+        allDay: false,
+        extendedProps: { calendar: eventLevel },
+      });
+    } else {
+      // generate sampai batas endDate
+      let currentStart = new Date(start);
+      let currentEnd = new Date(end);
+
+      while (currentStart <= end) {
+        newEvents.push({
+          id: `${Date.now()}-${currentStart.toISOString()}`,
+          title: eventTitle,
+          start: currentStart.toISOString(),
+          end: currentEnd.toISOString(),
+          allDay: false,
+          extendedProps: { calendar: eventLevel },
+        });
+
+        currentStart = getNextDate(currentStart, repeatType);
+        currentEnd = getNextDate(currentEnd, repeatType);
+      }
+    }
+
     if (selectedEvent) {
-      // Update existing event
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === selectedEvent.id
-            ? {
-                ...event,
-                title: eventTitle,
-                start: eventStartDate,
-                end: eventEndDate,
-                extendedProps: { calendar: eventLevel },
-              }
-            : event
+      // update
+      setEvents((prev) =>
+        prev.map((ev) =>
+          ev.id === selectedEvent.id ? { ...newEvents[0] } : ev
         )
       );
     } else {
-      // Add new event
-      const newEvent: CalendarEvent = {
-        id: Date.now().toString(),
-        title: eventTitle,
-        start: eventStartDate,
-        end: eventEndDate,
-        allDay: true,
-        extendedProps: { calendar: eventLevel },
-      };
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
+      // tambah
+      setEvents((prev) => [...prev, ...newEvents]);
     }
+
     closeModal();
     resetModalFields();
   };
+
 
   const resetModalFields = () => {
     setEventTitle("");
@@ -115,12 +163,23 @@ const Calendar: React.FC = () => {
     setSelectedEvent(null);
   };
 
+  const handleDeleteEvent = () => {
+    if (selectedEvent) {
+      const confirmDelete = window.confirm(
+        `Are you sure you want to delete "${selectedEvent.title}"?`
+      );
+      if (!confirmDelete) return;
+
+      setEvents((prev) =>
+        prev.filter((event) => event.id !== selectedEvent.id)
+      );
+      closeModal();
+      resetModalFields();
+    }
+  };
+
   return (
     <>
-      <PageMeta
-        title="React.js Calendar Dashboard | TailAdmin - Next.js Admin Dashboard Template"
-        description="This is React.js Calendar Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
-      />
       <div className="rounded-2xl border  border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="custom-calendar">
           <FullCalendar
@@ -139,126 +198,215 @@ const Calendar: React.FC = () => {
             eventContent={renderEventContent}
             customButtons={{
               addEventButton: {
-                text: "Add Event +",
+                text: "Add Schedular +",
                 click: openModal,
               },
             }}
           />
         </div>
-        <Modal
-          isOpen={isOpen}
-          onClose={closeModal}
-          className="max-w-[700px] p-6 lg:p-10"
-        >
+        {/* Modal */}
+        <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] p-6 lg:p-10">
           <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
-            <div>
-              <h5 className="mb-2 font-semibold text-gray-800 modal-title text-theme-xl dark:text-white/90 lg:text-2xl">
-                {selectedEvent ? "Edit Event" : "Add Event"}
-              </h5>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Plan your next big moment: schedule or edit an event to stay on
-                track
-              </p>
+            <h5 className="mb-2 font-semibold text-gray-800 text-theme-xl dark:text-white/90 lg:text-2xl">
+              {selectedEvent ? "Edit Schedular" : "Add Schedular"}
+            </h5>
+
+            {/* Title */}
+            <div className="mt-6">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Event Title
+              </label>
+              <input
+                type="text"
+                value={eventTitle}
+                onChange={(e) => setEventTitle(e.target.value)}
+                className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm dark:bg-gray-900 dark:text-white/90"
+              />
             </div>
-            <div className="mt-8">
-              <div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                    Event Title
+
+            {/* Color */}
+            <div className="mt-6">
+              <label className="block mb-4 text-sm font-medium text-gray-700 dark:text-gray-400">
+                Event Color
+              </label>
+              <div className="flex gap-4">
+                {Object.entries(calendarsEvents).map(([key]) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="event-level"
+                      value={key}
+                      checked={eventLevel === key}
+                      onChange={() => setEventLevel(key)}
+                    />
+                    {key}
                   </label>
-                  <input
-                    id="event-title"
-                    type="text"
-                    value={eventTitle}
-                    onChange={(e) => setEventTitle(e.target.value)}
-                    className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                  />
-                </div>
+                ))}
               </div>
-              <div className="mt-6">
-                <label className="block mb-4 text-sm font-medium text-gray-700 dark:text-gray-400">
-                  Event Color
-                </label>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-5">
-                  {Object.entries(calendarsEvents).map(([key, value]) => (
-                    <div key={key} className="n-chk">
-                      <div
-                        className={`form-check form-check-${value} form-check-inline`}
-                      >
-                        <label
-                          className="flex items-center text-sm text-gray-700 form-check-label dark:text-gray-400"
-                          htmlFor={`modal${key}`}
-                        >
-                          <span className="relative">
-                            <input
-                              className="sr-only form-check-input"
-                              type="radio"
-                              name="event-level"
-                              value={key}
-                              id={`modal${key}`}
-                              checked={eventLevel === key}
-                              onChange={() => setEventLevel(key)}
-                            />
-                            <span className="flex items-center justify-center w-5 h-5 mr-2 border border-gray-300 rounded-full box dark:border-gray-700">
-                              <span
-                                className={`h-2 w-2 rounded-full bg-white ${
-                                  eventLevel === key ? "block" : "hidden"
-                                }`}
-                              ></span>
-                            </span>
-                          </span>
-                          {key}
-                        </label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            </div>
+
+            {/* Dates */}
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              {/* Start Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                <input
+                  type="date"
+                  value={eventStartDate ? eventStartDate.split("T")[0] : ""}
+                  onChange={(e) => {
+                    const date = e.target.value;
+                    const time = eventStartDate && eventStartDate.includes("T")
+                      ? eventStartDate.split("T")[1]
+                      : "09:00"; // default jam mulai
+                    setEventStartDate(`${date}T${time}`);
+                  }}
+                  className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm dark:bg-gray-900 dark:text-white/90"
+                />
               </div>
+
+              {/* Start Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Start Time</label>
+                <input
+                  type="time"
+                  value={eventStartDate && eventStartDate.includes("T")
+                    ? eventStartDate.split("T")[1]
+                    : "09:00"}
+                  onChange={(e) => {
+                    const time = e.target.value;
+                    const date = eventStartDate && eventStartDate.includes("T")
+                      ? eventStartDate.split("T")[0]
+                      : new Date().toISOString().split("T")[0];
+                    setEventStartDate(`${date}T${time}`);
+                  }}
+                  className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm dark:bg-gray-900 dark:text-white/90"
+                />
+              </div>
+
+              {/* End Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">End Date</label>
+                <input
+                  type="date"
+                  value={eventEndDate ? eventEndDate.split("T")[0] : ""}
+                  onChange={(e) => {
+                    const date = e.target.value;
+                    const time = eventEndDate && eventEndDate.includes("T")
+                      ? eventEndDate.split("T")[1]
+                      : "17:00"; // default jam selesai
+                    setEventEndDate(`${date}T${time}`);
+                  }}
+                  className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm dark:bg-gray-900 dark:text-white/90"
+                />
+              </div>
+
+              {/* End Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">End Time</label>
+                <input
+                  type="time"
+                  value={eventEndDate && eventEndDate.includes("T")
+                    ? eventEndDate.split("T")[1]
+                    : "17:00"}
+                  onChange={(e) => {
+                    const time = e.target.value;
+                    const date = eventEndDate && eventEndDate.includes("T")
+                      ? eventEndDate.split("T")[0]
+                      : new Date().toISOString().split("T")[0];
+                    setEventEndDate(`${date}T${time}`);
+                  }}
+                  className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm dark:bg-gray-900 dark:text-white/90"
+                />
+              </div>
+
 
               <div className="mt-6">
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                  Enter Start Date
+                  Repeat Event
                 </label>
-                <div className="relative">
-                  <input
-                    id="event-start-date"
-                    type="date"
-                    value={eventStartDate}
-                    onChange={(e) => setEventStartDate(e.target.value)}
-                    className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                  Enter End Date
-                </label>
-                <div className="relative">
-                  <input
-                    id="event-end-date"
-                    type="date"
-                    value={eventEndDate}
-                    onChange={(e) => setEventEndDate(e.target.value)}
-                    className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="none"
+                      checked={repeatType === "none"}
+                      onChange={() => setRepeatType("none")}
+                    />
+                    None
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="daily"
+                      checked={repeatType === "daily"}
+                      onChange={() => setRepeatType("daily")}
+                    />
+                    Daily
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="weekly"
+                      checked={repeatType === "weekly"}
+                      onChange={() => setRepeatType("weekly")}
+                    />
+                    Weekly
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="monthly"
+                      checked={repeatType === "monthly"}
+                      onChange={() => setRepeatType("monthly")}
+                    />
+                    Monthly
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="3monthly"
+                      checked={repeatType === "3monthly"}
+                      onChange={() => setRepeatType("3monthly")}
+                    />
+                    3 Monthly
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="6monthly"
+                      checked={repeatType === "6monthly"}
+                      onChange={() => setRepeatType("6monthly")}
+                    />
+                    6 Monthly
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="yearly"
+                      checked={repeatType === "yearly"}
+                      onChange={() => setRepeatType("yearly")}
+                    />
+                    Yearly
+                  </label>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3 mt-6 modal-footer sm:justify-end">
-              <button
-                onClick={closeModal}
-                type="button"
-                className="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] sm:w-auto"
-              >
-                Close
-              </button>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 mt-6">
+              {selectedEvent && (
+                <button
+                  onClick={handleDeleteEvent}
+                  className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              )}
               <button
                 onClick={handleAddOrUpdateEvent}
-                type="button"
-                className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
+                className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600"
               >
-                {selectedEvent ? "Update Changes" : "Add Event"}
+                {selectedEvent ? "Update Changes" : "Add Schedular"}
               </button>
             </div>
           </div>

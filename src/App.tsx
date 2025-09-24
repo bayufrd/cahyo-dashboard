@@ -12,6 +12,7 @@ import Buttons from "./pages/UiElements/Buttons";
 import LineChart from "./pages/Charts/LineChart";
 import BarChart from "./pages/Charts/BarChart";
 import Calendar from "./pages/Calendar";
+import AddSchedular from "./pages/Dashboard/AddSchedular";
 import BasicTables from "./pages/Tables/BasicTables";
 import FormElements from "./pages/Forms/FormElements";
 import Blank from "./pages/Blank";
@@ -32,6 +33,10 @@ export default function App() {
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
+
+            {/* Add Schedular */}
+            <Route path="/add-schedular" element={<AddSchedular />} />
+
             <Route path="/blank" element={<Blank />} />
 
             {/* Forms */}
