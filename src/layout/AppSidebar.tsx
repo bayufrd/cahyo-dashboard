@@ -2,20 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 import {
-  BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
-  PieChartIcon,
-  PlugInIcon,
-  TableIcon,
-  UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
   name: string;
@@ -34,7 +26,9 @@ const navItems: NavItem[] = [
   {
     icon: <CalenderIcon />,
     name: "Task Schedule",
-    path: "/calendar",
+    subItems: [{ name: "Calender Schedule", path: "/calendar", pro: false},
+      {name: "List Schedule", path: "/basic-tables", pro: false}
+    ]
   },
   // {
   //   icon: <PageIcon/>, //<UserCircleIcon />,

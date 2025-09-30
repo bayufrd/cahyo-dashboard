@@ -1,0 +1,34 @@
+[
+  {
+    "id": 13,
+    "name": "TEST JOB - CAHYO",
+    "description": "TEST JOB - CAHYO",
+    "scheduleAt" : "2025-09-30T15:30:00.000Z",
+    "request": {
+      "url": "https://google.com",
+      "httpMethod": "GET",
+      "httpHeaders": [
+        { "key": "Content-Type", "value": "application/json" }
+      ],
+      "data": "{}"
+    },
+    "cronExpression": "0 0 9 * *",
+    "zoneId": "Asia/Jakarta"
+  },
+  {
+    "id": 14,
+    "name": "Backup Job",
+    "description": "Nightly DB Backup",
+    "scheduleAt" : "2025-013-30T15:30:00.000Z",
+    "request": {
+      "url": "https://api.example.com/backup",
+      "httpMethod": "POST",
+      "httpHeaders": [
+        { "key": "Authorization", "value": "Bearer token" }
+      ],
+      "data": "{ \"backup\": true }"
+    },
+    "cronExpression": null,
+    "zoneId": "UTC"
+  }
+]
