@@ -78,9 +78,6 @@ export default function BasicTableOne() {
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
             <TableRow>
-              <TableCell className="px-4 py-3">
-                <input type="checkbox" className="w-4 h-4 accent-blue-500 rounded" />
-              </TableCell>
               {[
                 "ID",
                 "Name",
@@ -114,9 +111,6 @@ export default function BasicTableOne() {
                   openModal();
                 }}
               >
-                <TableCell className="px-4 py-2">
-                  <input type="checkbox" className="w-4 h-4 accent-blue-500 rounded" />
-                </TableCell>
 
                 <TableCell className="px-6 py-2">{order.id ?? "-"}</TableCell>
                 <TableCell className="px-6 py-2">{order.name ?? "-"}</TableCell>
