@@ -6,6 +6,9 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { useEffect, useState } from "react";
+import { Modal } from "../../components/ui/modal";
+import { useModal } from "../../hooks/useModal";
+import SchedulerForm from "./SchedularForm";
 import Badge from "../../components/ui/badge/Badge";
 import parser from "cron-parser";
 
@@ -27,6 +30,8 @@ interface Order {
 
 export default function BasicTableOne() {
   const [tableData, setTableData] = useState<Order[]>([]);
+  const { isOpen, openModal, closeModal } = useModal();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     fetch("/Order.json")
@@ -34,7 +39,10 @@ export default function BasicTableOne() {
       .then((data: Order[]) => {
         const now = new Date();
 
-        const withStatus = data.map((o) => {
+        const withStatus = data.map((o, idx) => {
+          // ensure each order has an id (generate if missing)
+          const ensuredId = o.id != null ? o.id : Date.now() + idx;
+
           let status: "Active" | "Pending" | "Unknown" = "Unknown";
 
           try {
@@ -54,8 +62,9 @@ export default function BasicTableOne() {
 
           return {
             ...o,
+            id: ensuredId,
             status,
-          };
+          } as Order;
         });
 
         setTableData(withStatus);
@@ -97,7 +106,14 @@ export default function BasicTableOne() {
 
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {tableData.map((order) => (
-              <TableRow key={order.id ?? Math.random()}>
+              <TableRow
+                key={order.id ?? Math.random()}
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={() => {
+                  setSelectedOrder(order);
+                  openModal();
+                }}
+              >
                 <TableCell className="px-4 py-2">
                   <input type="checkbox" className="w-4 h-4 accent-blue-500 rounded" />
                 </TableCell>
@@ -150,11 +166,50 @@ export default function BasicTableOne() {
                     {order.status ?? "Unknown"}
                   </Badge>
                 </TableCell>
-              </TableRow>
+                </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+        <Modal isOpen={isOpen} onClose={() => { setSelectedOrder(null); closeModal(); }} className="max-w-[700px] p-4 my-10">
+          <div className="max-h-[70vh] overflow-y-auto">
+            <SchedulerForm
+              initialData={
+                selectedOrder
+                  ? {
+                      id: selectedOrder.id,
+                      name: selectedOrder.name,
+                      description: selectedOrder.description,
+                      scheduleAt: selectedOrder.scheduleAt ?? null,
+                      zoneId: selectedOrder.zoneId ?? null,
+                      cronExpression: selectedOrder.cronExpression ?? null,
+                      request: selectedOrder.request ?? undefined,
+                    }
+                  : undefined
+              }
+              onSubmit={(data) => {
+                // merge data into order shape
+                if (selectedOrder) {
+                  setTableData((prev) => prev.map((o) => (o.id === selectedOrder.id ? { ...o, ...data } as Order : o)));
+                } else {
+                  const newId = Date.now();
+                  setTableData((prev) => [...prev, { id: newId, ...data } as Order]);
+                }
+                setSelectedOrder(null);
+                closeModal();
+              }}
+              onDelete={() => {
+                if (selectedOrder) {
+                  setTableData((prev) => prev.filter((o) => o.id !== selectedOrder.id));
+                  setSelectedOrder(null);
+                  closeModal();
+                }
+              }}
+              onCancel={() => { setSelectedOrder(null); closeModal(); }}
+            />
+          </div>
+        </Modal>
     </div>
   );
 }
